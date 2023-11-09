@@ -14,16 +14,24 @@ class ZedOdomSubscriber(Node):
         self.rover_action_publisher = self.create_publisher(Int32, "/rover_action", 10)
 
     def listener_callback(self, zed_msg):
-        self.get_logger().info('X POS: "%s"' % zed_msg.pose.pose.position.x)
-        self.get_logger().info('Y POS: "%s"' % zed_msg.pose.pose.position.y)
-        self.get_logger().info('Z POS: "%s\n"' % zed_msg.pose.pose.position.z)
+        x_pos = zed_msg.pose.pose.position.x
+        y_pos = zed_msg.pose.pose.position.y
+        z_pos = zed_msg.pose.pose.position.z
 
-        self.get_logger().info('X ORI: "%s"' % zed_msg.pose.pose.orientation.x)
-        self.get_logger().info('Y ORI: "%s"' % zed_msg.pose.pose.orientation.y)
-        self.get_logger().info('Z ORI: "%s"' % zed_msg.pose.pose.orientation.z)
-        self.get_logger().info('W ORI: "%s\n"' % zed_msg.pose.pose.orientation.w)
+        x_ori = zed_msg.pose.pose.orientation.x
+        y_ori = zed_msg.pose.pose.orientation.y
+        z_ori = zed_msg.pose.pose.orientation.z
+        w_ori = zed_msg.pose.pose.orientation.w
 
-        rover_action = random.randint(0, 2)
+        self.get_logger().info(f"X POS: {x_pos}")
+        self.get_logger().info(f"Y POS: {y_pos}")
+        self.get_logger().info(f"Z POS: {z_pos}\n")
+        self.get_logger().info(f"X ORI: {x_ori}")
+        self.get_logger().info(f"Y ORI: {y_ori}")
+        self.get_logger().info(f"Z ORI: {z_ori}")
+        self.get_logger().info(f"W ORI: {w_ori}\n")
+
+        rover_action = random.randint(0, 2)  # ONLY INTEGER
         self.publish_position(rover_action)
 
     def publish_position(self, rover_action):
