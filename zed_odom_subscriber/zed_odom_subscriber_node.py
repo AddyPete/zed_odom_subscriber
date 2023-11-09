@@ -18,6 +18,11 @@ class ZedOdomSubscriber(Node):
         self.get_logger().info('Y POS: "%s"' % zed_msg.pose.pose.position.y)
         self.get_logger().info('Z POS: "%s"' % zed_msg.pose.pose.position.z)
 
+        self.get_logger().info('X ORI: "%s"' % zed_msg.pose.pose.orientation.x)
+        self.get_logger().info('Y ORI: "%s"' % zed_msg.pose.pose.orientation.y)
+        self.get_logger().info('Z ORI: "%s"' % zed_msg.pose.pose.orientation.z)
+        self.get_logger().info('W ORI: "%s"' % zed_msg.pose.pose.orientation.w)
+
 
 def main(args=None):
     rclpy.init(args=args)
