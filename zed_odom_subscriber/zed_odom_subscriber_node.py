@@ -79,16 +79,16 @@ class ZedOdomSubscriber(Node):
     def action_interpreter(self, rover_action):
         linear = LINEAR_SPEED
         if rover_action == 0:  # LEFT
-            angular = -ANGULAR_SPEED
-        elif rover_action == 2:  # RIGHT
             angular = ANGULAR_SPEED
+        elif rover_action == 2:  # RIGHT
+            angular = -ANGULAR_SPEED
         else:
             angular = 0.0
         return linear, angular
         # self.send_serial_command(linear=linear, angular=angular)
 
     def send_serial_command(self, linear, angular, reset=0.0):
-        command_string = f"{round(linear,2)},{round(angular,2)},0,0,0,0,0,{reset}&\n"
+        command_string = f"{round(linear,2)},{round(-angular,2)},0,0,0,0,0,{reset}&\n"
         self.get_logger().info(
             f"Command String {command_string}\nCommand String Length: {len(command_string)}"
         )
