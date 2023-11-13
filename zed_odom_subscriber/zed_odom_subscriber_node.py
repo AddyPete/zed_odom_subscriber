@@ -3,11 +3,12 @@ import math
 from rclpy.node import Node
 from std_msgs.msg import Int32
 from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Twist
 import numpy as np
 import serial
 
 # SPEED
-LINEAR_SPEED = 0.30
+LINEAR_SPEED = 0.10
 ANGULAR_SPEED = 0.30
 # CONSTANTS
 DIFF_ANGLE_THRESHOLD = 1
@@ -21,10 +22,13 @@ NO_STEER = 1
 class ZedOdomSubscriber(Node):
     def __init__(self):
         super().__init__("zed_odom_subscriber")
-        self.subscription = self.create_subscription(
-            Odometry, "/zed2/zed_node/odom", self.listener_callback, 10
+        self.create_subscription(
+            Odometry, "/zed2/zed_node/odom", self.zed_odom_listener_callback, 10
         )
+
+        self.create_subscription(Twist, "/cmd_vel", self.cmd_vel_all_callback, 10)
         self.rover_action_publisher = self.create_publisher(Int32, "/rover_action", 10)
+        self.zed_twist_publisher = self.create_publisher(Twist, "/cmd_vel_zed", 10)
         self.current_waypoint = 0
         self.finished_mission = False
         self.waypoint_objects = [[5, 0], [5, -5], [0, -5], [0, 0]]
@@ -37,7 +41,7 @@ class ZedOdomSubscriber(Node):
         except serial.SerialException as e:
             self.get_logger().info(f"An error occurred: {e}")
 
-    def listener_callback(self, zed_msg):
+    def zed_odom_listener_callback(self, zed_msg):
         x_pos = zed_msg.pose.pose.position.x
         y_pos = zed_msg.pose.pose.position.y
         z_pos = zed_msg.pose.pose.position.z
@@ -63,8 +67,14 @@ class ZedOdomSubscriber(Node):
         rover_action = self.action_policy(
             x_pos, y_pos, z_pos, x_ori, y_ori, z_ori, w_ori
         )
-        self.action_interpreter(rover_action)
-        self.publish_position(rover_action)
+        linear, angular = self.action_interpreter(rover_action)
+        self.publish_cmd_vel_zed(linear, angular)
+        # self.publish_position(rover_action)
+
+    def cmd_vel_all_callback(self, cmd_vel_msg):
+        linear = cmd_vel_msg.linear.x
+        angular = cmd_vel_msg.angular.z
+        self.send_serial_command(linear=linear, angular=angular)
 
     def action_interpreter(self, rover_action):
         linear = LINEAR_SPEED
@@ -74,20 +84,30 @@ class ZedOdomSubscriber(Node):
             angular = ANGULAR_SPEED
         else:
             angular = 0.0
-
-        self.send_serial_command(linear=linear, angular=angular)
+        return linear, angular
+        # self.send_serial_command(linear=linear, angular=angular)
 
     def send_serial_command(self, linear, angular, reset=0.0):
         command_string = f"{round(linear,2)},{round(angular,2)},0,0,0,0,0,{reset}&\n"
         self.get_logger().info(
-            f"Command String {command_string}\n Count: {len(command_string)}"
+            f"Command String {command_string}\nCommand String Length: {len(command_string)}"
         )
-        self.arduino.write(command_string.encode())
 
-    def publish_position(self, rover_action):
-        rover_action_msg = Int32()
-        rover_action_msg.data = rover_action
-        self.rover_action_publisher.publish(rover_action_msg)
+        try:
+            self.arduino.write(command_string.encode())
+        except AttributeError as e:
+            self.get_logger().info(f"AttributeError: {e}")
+
+    # def publish_position(self, rover_action):
+    #     rover_action_msg = Int32()
+    #     rover_action_msg.data = rover_action
+    #     self.rover_action_publisher.publish(rover_action_msg)
+
+    def publish_cmd_vel_zed(self, linear=0.0, angular=0.0):
+        cmd_vel_msg = Twist()
+        cmd_vel_msg.linear.x = linear
+        cmd_vel_msg.angular.z = angular
+        self.zed_twist_publisher.publish(cmd_vel_msg)
 
     def action_policy(self, x, y, z, qx, qy, qz, qw):
         # assuming the orientation data in the zed odom message are already in quaternions
