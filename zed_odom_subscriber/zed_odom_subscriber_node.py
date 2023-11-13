@@ -6,10 +6,13 @@ from nav_msgs.msg import Odometry
 import numpy as np
 import serial
 
+# SPEED
 LINEAR_SPEED = 0.30
 ANGULAR_SPEED = 0.30
+# CONSTANTS
 DIFF_ANGLE_THRESHOLD = 1
 DISTANCE_TO_TARGET_THRESHOLD = 0.3
+# ACTIONS
 LEFT_STEER = 0
 RIGHT_STEER = 2
 NO_STEER = 1
@@ -27,7 +30,12 @@ class ZedOdomSubscriber(Node):
         self.waypoint_objects = [[5, 0], [5, -5], [0, -5], [0, 0]]
         # self.waypoint_objects = [[3, 0], [6, 0], [6, 6], [0, 3]]
 
-        self.arduino = serial.Serial(port="/dev/ttyUSB0", baudrate=115200, timeout=1)
+        try:
+            self.arduino = serial.Serial(
+                port="/dev/ttyUSB0", baudrate=115200, timeout=1
+            )
+        except serial.SerialException as e:
+            self.get_logger().info(f"An error occurred: {e}")
 
     def listener_callback(self, zed_msg):
         x_pos = zed_msg.pose.pose.position.x
@@ -39,13 +47,13 @@ class ZedOdomSubscriber(Node):
         z_ori = zed_msg.pose.pose.orientation.z
         w_ori = zed_msg.pose.pose.orientation.w
 
-        self.get_logger().info(f"X POS: {x_pos}")
-        self.get_logger().info(f"Y POS: {y_pos}")
-        self.get_logger().info(f"Z POS: {z_pos}\n")
-        self.get_logger().info(f"X ORI: {x_ori}")
-        self.get_logger().info(f"Y ORI: {y_ori}")
-        self.get_logger().info(f"Z ORI: {z_ori}")
-        self.get_logger().info(f"W ORI: {w_ori}\n")
+        # self.get_logger().info(f"X POS: {x_pos}")
+        # self.get_logger().info(f"Y POS: {y_pos}")
+        # self.get_logger().info(f"Z POS: {z_pos}\n")
+        # self.get_logger().info(f"X ORI: {x_ori}")
+        # self.get_logger().info(f"Y ORI: {y_ori}")
+        # self.get_logger().info(f"Z ORI: {z_ori}")
+        # self.get_logger().info(f"W ORI: {w_ori}\n")
 
         self.get_logger().info(
             f"Current Position: X: {round(x_pos,3)} Y: {round(y_pos,3)}"
